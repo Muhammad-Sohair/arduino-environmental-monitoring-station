@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Environmental Monitoring Station</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%2322d3ee'/><circle cx='16' cy='16' r='6' fill='%230b1220'/></svg>">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 3v10.5a3.5 3.5 0 1 1-3-.01V5a1.5 1.5 0 0 1 3 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="10.5" cy="16.5" r="1.6" fill="currentColor"/><path d="M15 6h5M15 9.5h4M15 13h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div>
+        <h1>Environmental Monitoring Station</h1>
+        <p class="sub">Arduino · DHT11 · LDR — live telemetry</p>
+      </div>
+    </div>
+    <div class="top-right">
+      <div id="conn" class="pill pill-wait"><span class="dot"></span><span id="conn-text">Starting…</span></div>
+      <div class="clock">
+        <div id="clock-time">--:--:--</div>
+        <div id="last-update" class="muted">waiting for data</div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="banner" class="banner banner-wait" role="status" aria-live="polite">
+      <div class="banner-icon" id="banner-icon">⏳</div>
+      <div>
+        <div class="banner-title" id="banner-title">WAITING FOR DATA</div>
+        <div class="banner-sub" id="banner-sub">Connect the Arduino to start monitoring</div>
+      </div>
+      <div class="banner-limits" id="banner-limits"></div>
+    </section>
+
+    <section class="grid-3">
+      <article class="card gauge-card">
+        <div class="card-head"><h2>Temperature</h2><span class="tag" id="temp-tag">—</span></div>
+        <div class="gauge" id="gauge-temp"></div>
+        <div class="minmax">
+          <div><span>Min</span><b id="temp-min">—</b></div>
+          <div><span>Avg</span><b id="temp-avg">—</b></div>
+          <div><span>Max</span><b id="temp-max">—</b></div>
+        </div>
+      </article>
+
+      <article class="card gauge-card">
+        <div class="card-head"><h2>Humidity</h2><span class="tag" id="hum-tag">—</span></div>
+        <div class="gauge" id="gauge-hum"></div>
+        <div class="minmax">
+          <div><span>Min</span><b id="hum-min">—</b></div>
+          <div><span>Avg</span><b id="hum-avg">—</b></div>
+          <div><span>Max</span><b id="hum-max">—</b></div>
+        </div>
+      </article>
+
+      <article class="card gauge-card">
+        <div class="card-head"><h2>Light intensity</h2><span class="tag" id="light-tag">—</span></div>
+        <div class="light-meter">
+          <div class="light-value"><span id="light-val">—</span><small>%</small></div>
+          <div class="light-raw muted">raw ADC <span id="light-raw">—</span> / 1023</div>
+          <div class="light-bar"><div class="light-fill" id="light-fill"></div></div>
+          <div class="light-scale"><span>Dark</span><span>Dim</span><span>Indoor</span><span>Bright</span></div>
+        </div>
+        <div class="minmax">
+          <div><span>Min</span><b id="light-min">—</b></div>
+          <div><span>Avg</span><b id="light-avg">—</b></div>
+          <div><span>Max</span><b id="light-max">—</b></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="card chart-card">
+      <div class="card-head chart-head">
+        <h2>Live graph</h2>
+        <div class="chart-controls">
+          <div class="seg" id="metric-seg" role="tablist" aria-label="Metric">
+            <button data-metric="temp" class="active">Temperature</button>
+            <button data-metric="hum">Humidity</button>
+            <button data-metric="light">Light</button>
+            <button data-metric="all">All</button>
+          </div>
+          <div class="seg" id="range-seg" role="tablist" aria-label="Time range">
+            <button data-range="120">2 min</button>
+            <button data-range="600" class="active">10 min</button>
+            <button data-range="3600">1 h</button>
+          </div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="chart"></canvas>
+        <div id="chart-tip" class="chart-tip" hidden></div>
+        <div id="chart-empty" class="chart-empty">No readings yet</div>
+      </div>
+      <div class="legend" id="legend"></div>
+    </section>
+
+    <section class="grid-3 bottom">
+      <article class="card">
+        <div class="card-head"><h2>Alert limits</h2><span class="tag" id="sync-tag" title="Limits confirmed by the Arduino">—</span></div>
+        <form id="limits-form" class="limits">
+          <label>
+            <span>Max temperature</span>
+            <div class="input-unit"><input type="number" id="in-temp" min="1" max="79" step="0.5" required><em>°C</em></div>
+          </label>
+          <label>
+            <span>Max humidity</span>
+            <div class="input-unit"><input type="number" id="in-hum" min="1" max="100" step="1" required><em>%</em></div>
+          </label>
+          <button type="submit" class="btn primary">Apply to Arduino</button>
+          <p class="form-msg" id="limits-msg"></p>
+        </form>
+        <div class="toggles">
+          <label class="switch"><input type="checkbox" id="mute"><span class="slider"></span><span>Mute Arduino buzzer</span></label>
+          <label class="switch"><input type="checkbox" id="browser-sound"><span class="slider"></span><span>Beep on this laptop too</span></label>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head"><h2>Alert log</h2><span class="tag" id="alert-count">0</span></div>
+        <ul class="alert-log" id="alert-log"><li class="empty muted">No alerts yet</li></ul>
+      </article>
+
+      <article class="card">
+        <div class="card-head"><h2>Session</h2></div>
+        <dl class="session">
+          <div><dt>Source</dt><dd id="s-source">—</dd></div>
+          <div><dt>Uptime</dt><dd id="s-uptime">—</dd></div>
+          <div><dt>Readings</dt><dd id="s-count">0</dd></div>
+          <div><dt>Interval</dt><dd>every 2 s</dd></div>
+        </dl>
+        <div class="session-actions">
+          <a class="btn" href="/api/export.csv" download>Download CSV</a>
+          <button class="btn ghost" id="clear-btn" type="button">Reset session</button>
+        </div>
+        <p class="muted small" id="s-detail"></p>
+      </article>
+    </section>
+  </main>
+
+  <footer class="muted small">Smart Environmental Monitoring Station · data refreshes live over USB serial</footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
