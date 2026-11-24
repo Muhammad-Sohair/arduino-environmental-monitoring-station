@@ -8,7 +8,11 @@ browser**, and the new limits are sent back to the Arduino over USB.
 
 ![Live dashboard reading real sensor data](docs/dashboard-live.jpg)
 
-<!-- MEDIA: add a photo of the hardware and a short demo GIF/video here -->
+| The hardware | Running on the laptop |
+|---|---|
+| ![Arduino Nano, DHT11, LDR, LEDs, buzzer and I2C LCD on a breadboard](docs/hardware.jpg) | ![Dashboard showing live readings from the Arduino](docs/dashboard-photo-2.jpg) |
+
+**Demo video:** [docs/demo.mp4](docs/demo.mp4) (18 s: the live dashboard, then the hardware and LCD)
 
 | Normal | Alert |
 |---|---|
